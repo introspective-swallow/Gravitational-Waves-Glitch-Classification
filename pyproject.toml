@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gw-glitch-classification"
+version = "0.0.1"
+dependencies = [
+    "numpy",
+    "pandas",
+    "h5py",
+    "matplotlib",
+    "torch",
+    "scikit-learn",
+    "tqdm"
+]
