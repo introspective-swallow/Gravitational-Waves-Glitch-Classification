@@ -11,3 +11,6 @@ MANIFEST
 __pycache__/
 *.py[cod]
 *$py.class
+
+# vscode settings
+settings.json
