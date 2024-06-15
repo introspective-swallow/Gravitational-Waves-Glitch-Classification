@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 from torchvision.transforms import v2
-
   
 def normalize_percentile(im):
     # Normalize pixel values between 5-95th percentiles
@@ -25,15 +24,4 @@ def SG_process_image(im):
     # Scale by factor of 0.55
     im = v2.Resize(size=(282,132),antialias=True)(im.unsqueeze(0)).squeeze(0).float()
     im = im.unsqueeze(0)
-    return im
-
-def GS_process_image(im):
-    if type(im) != torch.Tensor:
-        im = torch.from_numpy(im)
-
-    im = (im-torch.min(im))/torch.max(im)
-    return im
-
-def GS_process_image_np(im):
-    im = (im-np.min(im))/np.max(im)
     return im
