@@ -2,17 +2,18 @@ import torch.nn as nn
 import torchvision.models as models
 from ml.model.init_weights import init_weights
 
+
 # Resnet18 from scratch
-def ResNet18(num_classes=22):
-    model = models.resnet18()
+def ResNet50(num_classes=22):
+    model = models.resnet50()
     model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     model.fc = nn.Linear(model.fc.in_features, num_classes)
     model.init_weights = init_weights
     return model
 
 # Resnet18 pretrained adapted to 1 channel
-def ResNet18_pretrained(num_classes=22):
-    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+def ResNet50_pretrained(num_classes=22):
+    model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
     # freeze all layers
     for param in model.parameters():
@@ -28,8 +29,8 @@ def ResNet18_pretrained(num_classes=22):
     return model
 
 # Resnet18 pretrained 
-def ResNet18_pretrained3Channel(num_classes=22):
-    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+def ResNet50_pretrained3Channel(num_classes=22):
+    model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
     # freeze all layers
     for param in model.parameters():
