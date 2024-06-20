@@ -3,6 +3,27 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import random
+import os
+
+def seed_everything(seed):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    #torch.backends.cudnn.deterministic = True
+    
+def get_device():
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+    print(f"Using {device} device.")
+    return device
 
 def load_model(model_constr, saved_model_path, dataloader, params={}, is_parallel=True, init=True, device="cpu"):
     model = model_constr(**params)
@@ -14,7 +35,9 @@ def load_model(model_constr, saved_model_path, dataloader, params={}, is_paralle
 
     checkpoint = torch.load(saved_model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
-    return model
+    acc = checkpoint['accuracy']
+    f1_score = checkpoint['f1-score']
+    return model, acc, f1_score
     
 def get_conf_matrix(model, loader, num_classes, device="cpu"):
     confusion_matrix = torch.zeros(num_classes, num_classes)
@@ -49,4 +72,4 @@ def plot_conf_matrix(conf_matrix, names_classes, file_dir=None):
     plt.tight_layout()
     plt.show()
     if file_dir:
-        plt.savefig(file_dir / "conf_matrix.png")
+        fig.savefig(file_dir / "conf_matrix.png")
