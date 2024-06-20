@@ -234,10 +234,11 @@ class WaveFormDatasetMerged(Dataset):
         return image, label
 
  
-class WaveFormDatasetMergedPreprocess(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu"):
+class WaveFormDatasetMerged(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, preprocess=True, device="cpu"):
         self.split = split
         self.transform = transform
+        self.preprocess = preprocess
         self.labels = []
         self.images = []
 
@@ -264,17 +265,121 @@ class WaveFormDatasetMergedPreprocess(Dataset):
 
                 self.images.append(image_multi)
                 self.labels.append(classes.index(label))
-
-        self.labels = torch.tensor(self.labels).to(device)
-        self.images = torch.stack(self.images).to(device)
+        if self.preprocess:
+            self.labels = torch.tensor(self.labels).to(device)
+            self.images = torch.stack(self.images).to(device)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        image = self.images[idx,:,:,:]
+        if self.preprocess:
+            image = self.images[idx,:,:,:]
+        else:
+            image = self.images[idx]
+            if self.transform:
+                image = self.transform(image)
+        
         label = self.labels[idx]
+        return image, label
+        
+class WaveFormDatasetMerged3Channel(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, save_to_ram=True, device="cpu"):
+        self.split = split
+        self.transform = transform
+        self.save_to_ram = save_to_ram
+        self.labels = []
+        self.images = []
 
+        metadata = get_metadata(data_file_path, meta_file_path)
+        complete_dataset = metadata["dataset"]
+        classes = metadata["names_classes"]
+        resolutions = metadata["resolutions"]
+
+        dataset = complete_dataset[complete_dataset["sample_type"]==split].reset_index(drop=True)
+
+        with h5py.File(data_file_path, 'r') as f:
+            pbar = tqdm(range(len(dataset)))
+            pbar.set_description(f"Loading {split} data")
+            for i in pbar:
+                id = dataset["gravityspy_id"][i]
+                label = dataset["label"][i]
+                image05 = self.transform(np.array(f[label][split][id][resolutions[0]]))
+                image10 = self.transform(np.array(f[label][split][id][resolutions[1]]))
+                image20 = self.transform(np.array(f[label][split][id][resolutions[2]]))
+                image40 = self.transform(np.array(f[label][split][id][resolutions[3]]))
+                image_multi1 = torch.cat((image05, image10), axis=1)
+                image_multi2 = torch.cat((image20, image40), axis=1)
+                image_multi = torch.cat((image_multi1, image_multi2), axis=2)
+
+                # Repeat the first channel to have 3 channels
+                image_multi = torch.cat((image_multi, image_multi, image_multi), axis=0)
+
+                self.images.append(image_multi)
+                self.labels.append(classes.index(label))
+        if self.save_to_ram:
+            self.labels = torch.tensor(self.labels).to(device)
+            self.images = torch.stack(self.images).to(device)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        if self.save_to_ram:
+            image = self.images[idx,:,:,:]
+        else:
+            image = self.images[idx]
+        
+        label = self.labels[idx]
         return image, label
 
- 
+class WaveFormDatasetMerged3ChannelPostprocess(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, save_to_ram=True, device="cpu"):
+        self.split = split
+        self.transform = transform
+        self.save_to_ram = save_to_ram
+        self.labels = []
+        self.images = []
+
+        metadata = get_metadata(data_file_path, meta_file_path)
+        complete_dataset = metadata["dataset"]
+        classes = metadata["names_classes"]
+        resolutions = metadata["resolutions"]
+
+        dataset = complete_dataset[complete_dataset["sample_type"]==split].reset_index(drop=True)
+
+        with h5py.File(data_file_path, 'r') as f:
+            pbar = tqdm(range(len(dataset)))
+            pbar.set_description(f"Loading {split} data")
+            for i in pbar:
+                id = dataset["gravityspy_id"][i]
+                label = dataset["label"][i]
+                image05 = np.array(f[label][split][id][resolutions[0]])
+                image10 = np.array(f[label][split][id][resolutions[1]])
+                image20 = np.array(f[label][split][id][resolutions[2]])
+                image40 = np.array(f[label][split][id][resolutions[3]])
+                image_multi1 = torch.cat((image05, image10), axis=1)
+                image_multi2 = torch.cat((image20, image40), axis=1)
+                image_multi = torch.cat((image_multi1, image_multi2), axis=2)
+
+                # Repeat the first channel to have 3 channels
+                image_multi = torch.cat((image_multi, image_multi, image_multi), axis=0)
+                image_multi = self.transform(image_multi)
+
+                self.images.append(image_multi)
+                self.labels.append(classes.index(label))
+        if self.save_to_ram:
+            self.labels = torch.tensor(self.labels).to(device)
+            self.images = torch.stack(self.images).to(device)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        if self.save_to_ram:
+            image = self.images[idx,:,:,:]
+        else:
+            image = self.images[idx]
+        
+        label = self.labels[idx]
+        return image, label
