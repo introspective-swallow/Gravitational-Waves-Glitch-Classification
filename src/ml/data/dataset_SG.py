@@ -6,9 +6,7 @@ from torch.utils.data import Dataset
 import os
 from tqdm import tqdm
 
-# ------------ Synthetic glitches datasets
-
-def get_raw_SG_dataset(data_path):
+def get_raw_dataset(data_path):
     # Define split and class names
     split_names = ['train','val','test']
     noise_names = ['GAUSS','CHIRPLIKE','RD','SCATTEREDLIKE','SG','WHISTLELIKE','NOISE']
@@ -48,6 +46,15 @@ def get_raw_SG_dataset(data_path):
     test_annotations = [noise_names.index(noise) for noise in test_annotations]
     return train_annotations, train_files, val_annotations, val_files, test_annotations, test_files
 
+def get_dataset(annotations_df, img_filepath_list, transform=None):
+    images = []
+    image_labels = annotations_df
+    for file_path in tqdm(img_filepath_list):
+        image = np.load(file_path)
+        if transform:
+            transformed_image = transform(image)
+        images.append(transformed_image)
+    return images, image_labels
 
 
 # Define dataset class for the waveforms

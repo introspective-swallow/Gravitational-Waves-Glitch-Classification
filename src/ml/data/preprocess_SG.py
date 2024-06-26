@@ -9,7 +9,7 @@ def normalize_percentile(im):
     return im
 
 
-def SG_process_image(im):
+def process_image(im):
     # Transform to 32-bit gray scale
     im = torch.from_numpy(im)
     im = (im-torch.min(im))/torch.max(im)
