@@ -30,5 +30,4 @@ axs[1].plot(np.fft.fftshift(freq2), np.sqrt(xfft2**2))
 axs[1].set_xticks([-math.pi,-math.pi/2,0,math.pi/2,math.pi], ['-π', '-π/2', '0', 'π/2', 'π'])
 axs[1].set_yticks([])
 
-plt.savefig('/home/gui/OneDrive/Mathematics/TFG/Latex/Figs/spectral_leakage.png', transparent=True)
 plt.show()

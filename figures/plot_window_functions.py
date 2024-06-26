@@ -45,5 +45,4 @@ for i, key in enumerate(windows):
     ax.set_ylim([0,1.05])
     ax.set_title(key, fontsize=15)
 
-plt.savefig('/home/gui/OneDrive/Mathematics/TFG/Latex/Figs/window.png', transparent=True)
 plt.show()
