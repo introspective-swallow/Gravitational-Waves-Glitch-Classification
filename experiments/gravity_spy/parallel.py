@@ -14,9 +14,9 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
-from ml.data.preprocess_GS import GS_process_image as process_image
-from ml.model.CNN import GS_CNN as CNN
-from ml.data.datasets import GS_WaveFormDatasetFast as WaveFormDataset, get_metadata
+from ml.data.preprocess_GS import process_parallel_image_augment_train as process_image_train, process_parallel_image_augment_test as process_image_test
+from ml.model.CNN_parallel import CNN_parallel as CNN
+from ml.data.dataset_GS import WaveFormDatasetParallel as Dataset, get_metadata
 from ml.training.loops import train_loop, test_loop
 from ml.utils.utils import load_model, get_conf_matrix, print_logs, plot_conf_matrix
 
@@ -49,9 +49,9 @@ df.to_csv(OUTPUT / "params.csv")
 metadata = get_metadata(DATASET_PATH, METADATA_PATH)
 names_classes = metadata["names_classes"]
 
-training_data = WaveFormDataset(DATASET_PATH, METADATA_PATH, "train", res=0.5, transform=process_image, device=device)
-val_data = WaveFormDataset(DATASET_PATH, METADATA_PATH, "validation", res=0.5, transform=process_image, device=device)
-test_data = WaveFormDataset(DATASET_PATH, METADATA_PATH, "test", res=0.5, transform=process_image, device=device)
+training_data = Dataset(DATASET_PATH, METADATA_PATH, "train", res=0.5, transform=process_image_train, device=device)
+val_data = Dataset(DATASET_PATH, METADATA_PATH, "validation", res=0.5, transform=process_image_test, device=device)
+test_data = Dataset(DATASET_PATH, METADATA_PATH, "test", res=0.5, transform=process_image_test, device=device)
 
 # Define dataloaders
 train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -76,8 +76,7 @@ epochs = 1
 
 train_log = []
 test_log = []
-best_metric = 0
-
+best_acc = 0
 test_acc_log = []
 test_f1_log = []
 
@@ -92,8 +91,8 @@ for epoch in range(epochs):
     test_acc_log.append(test_acc)
     test_f1_log.append(test_f1)
 
-    if test_f1 > best_metric:
-        best_metric = test_f1
+    if test_acc > best_acc:
+        best_acc = test_acc
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -105,12 +104,16 @@ for epoch in range(epochs):
 print("Done!")
 df = pd.DataFrame({"train_log":train_log, "test_log":test_log, "test_acc_log":test_acc_log, "test_f1_log":test_f1_log})
 df.to_csv(OUTPUT / 'logs.csv')
-print_logs(df, epochs=epochs, file_dir=OUTPUT)
+print("Best val acc: ", best_acc)
 
-model, best_acc, best_f1 = load_model(CNN, OUTPUT / "model.pt", test_dataloader, device=device, is_parallel=True, init=True)
-print(f"Best val acc: {(100*best_acc):>0.2f}%, Best val f1: {(100*best_f1):>0.2f}%")
+model = load_model(CNN, OUTPUT / "model.pt", test_dataloader, device=device, is_parallel=True, init=False)
 
 loss, accuracy, f1 = test_loop(test_dataloader, model, loss_fn, split="test", device=device)
+print("Test acc: ", accuracy, "Test f1: ", f1)
+
+print_logs(df, epochs=epochs, file_dir=OUTPUT)
+
 
 confusion_matrix = get_conf_matrix(model, test_dataloader, len(names_classes), device=device)
+
 plot_conf_matrix(confusion_matrix, names_classes, OUTPUT)
