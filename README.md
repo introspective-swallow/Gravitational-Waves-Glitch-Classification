@@ -23,9 +23,28 @@ python3 ./src/ml/data/download_GS_data.py
 
 ## Models
 
+Best models over simulated glitches:
+
+| Model  | Precision | Precision (10 models)       |
+|--------|-----------|-----------------------------|
+| 3xCNN  | 99.90%    | 99.42 ± 0.64%               |
+| 1xCNN  | 97.3%     | -                           |
+| RF     | 99.44%    | -                           |
+
+
 Training over simulated glitches dataset:
 
 <img src="figures/ex-sint-glitch-train.png" alt="drawing" width="400"/>
+
+Best models over Gravity Spy dataset
+
+| Resolution | Accuracy | F1-score |
+|-----------|-----------|----------|
+| 0.5s      | 94.7%     | 93.5%    |
+| 1s        | 95.9%     | 92.9%    |
+| 2s        | 96.2%     | 90.0%    |
+| 4s        | 94.4%     | 91.2%    |
+
 
 Training over Gravity Spy dataset:
 
