@@ -25,19 +25,20 @@ def get_device():
     print(f"Using {device} device.")
     return device
 
-def load_model(model_constr, saved_model_path, dataloader, params={}, is_parallel=True, init=True, device="cpu"):
+def load_model(model_constr, saved_model_path, dummy_dims=((64,4,140,170)), params={}, is_parallel=True, init=True, device="cuda"):
     model = model_constr(**params)
     if is_parallel:
         model= nn.DataParallel(model)
     model.to(device)
     if init:
-        model.module.init_weights(next(iter(dataloader))[0].to(device))
+        model.module.init_weights(torch.randn(dummy_dims).to(device))
 
     checkpoint = torch.load(saved_model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     acc = checkpoint['accuracy']
     f1_score = checkpoint['f1-score']
-    return model, acc, f1_score
+    epoch = checkpoint['epoch']
+    return model, acc, f1_score, epoch
     
 def get_conf_matrix(model, loader, num_classes, device="cpu"):
     confusion_matrix = torch.zeros(num_classes, num_classes)
@@ -62,7 +63,7 @@ def print_logs(df, epochs=50, file_dir=None):
     ax.legend()
     plt.show()
     if file_dir:
-        plt.savefig(file_dir / "logs.png")
+        fig.savefig(file_dir / "logs.png")
 
 def plot_conf_matrix(conf_matrix, names_classes, file_dir=None):
     fig, ax = plt.subplots(figsize=(15,15))
@@ -73,3 +74,10 @@ def plot_conf_matrix(conf_matrix, names_classes, file_dir=None):
     plt.show()
     if file_dir:
         fig.savefig(file_dir / "conf_matrix.png")
+
+def compact_dict(d):
+    # Create a new dict, where each value is inside a list
+    new_d = {}
+    for k,v in d.items():
+        new_d[k] = [v]
+    return new_d

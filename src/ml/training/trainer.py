@@ -6,7 +6,7 @@ from torch import nn
 import matplotlib.pyplot as plt
 import h5py
 from ml.training.loops import train_loop, test_loop
-from ml.utils.utils import seed_everything, print_logs, load_model, get_conf_matrix, plot_conf_matrix, get_device
+from ml.utils.utils import seed_everything, print_logs, load_model, get_conf_matrix, plot_conf_matrix, get_device, compact_dict
 from ml.losses.focal_loss import FocalLoss, make_weights_for_balanced_classes
 from ml.data.preprocess_GS import process_image
 from ml.model.CNN import CNN
@@ -17,7 +17,7 @@ class Trainer():
                  res=None, epochs=50, batch_size=64, weight_decay= 2*1e-4 ,lr = 0.001, label_smoothing=0, 
                  weighted_loss=False, dataset=WaveFormDatasetFast, process_train=process_image, process_test=process_image,
                  scheduler_active=False, device=get_device(), init_model=False, use_amp = True, patience=2,
-                 save_to_ram=True):
+                 save_to_ram=True, img_augmentation=False, opt="AdamW"):
         metadata = get_metadata(DATASET_PATH, METADATA_PATH)
         self.names_classes = metadata["names_classes"]
         self.num_classes = len(self.names_classes)
@@ -52,7 +52,10 @@ class Trainer():
         self.use_amp = use_amp
         self.patience = patience
         self.save_to_ram = save_to_ram
-    
+        self.img_augmentation = img_augmentation
+        self.dummy_dims = (64, *self.training_data[0][0].shape)
+        self.opt = opt
+
     def new_parameters(self, **args):
         # Iterate over the parameters and update the ones that are not None
         for key, value in args.items():
@@ -64,6 +67,7 @@ class Trainer():
 
         if not os.path.exists(self.file_dir):
             os.makedirs(self.file_dir)
+        print(f"Saving to {self.file_dir}.")
 
         weights = make_weights_for_balanced_classes(self.training_data, self.num_classes)                                                                
         weights = torch.DoubleTensor(weights)                                       
@@ -82,7 +86,7 @@ class Trainer():
 
         # Initialize model
         if self.init_model:
-            self.model.module.init_weights(next(iter(train_dataloader))[0].to(self.device))
+            self.model.module.init_weights(torch.randn(self.dummy_dims).to(self.device))
 
         # Define loss and optimizer
         # Define loss and optimizer
@@ -95,16 +99,22 @@ class Trainer():
             loss_fn = nn.CrossEntropyLoss(weight=class_proportions, label_smoothing=self.label_smoothing)
         elif self.loss=="focal":
             loss_fn = FocalLoss(weight=class_proportions)
-        #optimizer = torch.optim.Adadelta(model.parameters(), lr=lr, weight_decay=weight_decay)
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if self.opt == "Ada":
+            optimizer = torch.optim.Adadelta(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        elif self.opt == "AdamW":
+            optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        elif self.opt == "Adam":
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+
         if self.scheduler_active:
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, verbose=True, patience=self.patience, min_lr=1e-8)
         else:
             scheduler=None
 
-        params = {"batch_size":[self.batch_size], "lr":[self.lr], "weight_decay":[self.label_smoothing], "weight_decay":[self.label_smoothing],"weighted_loss":self.weighted_loss,
-                         "optimizer":type(optimizer).__name__, "loss":self.loss}
-        params.update(self.model_params)
+        params = {"batch_size":[self.batch_size], "lr":[self.lr], "weight_decay":[self.weight_decay], 
+                  "label_smoothing":[self.label_smoothing],"weighted_loss":[self.weighted_loss],
+                         "optimizer":[type(optimizer).__name__], "loss":[self.loss], "img_augmentation":[self.img_augmentation]}
+        params.update(compact_dict(self.model_params))
 
         df = pd.DataFrame.from_dict(params)
         df.to_csv(self.file_dir / "params.csv")
@@ -141,8 +151,8 @@ class Trainer():
         df.to_csv(self.file_dir/"logs.csv")
         print_logs(df, epochs=epochs, file_dir=self.file_dir)
 
-        self.model, best_acc, best_f1 = load_model(self.model_class, self.file_dir / "model.pt", test_dataloader, params=self.model_params, device=self.device, is_parallel=True, init=self.init_model)
-        print(f"Best val acc: {(100*best_acc):>0.2f}%, Best val f1: {(100*best_f1):>0.2f}%")
+        self.model, best_acc, best_f1, best_epoch = load_model(self.model_class, self.file_dir / "model.pt", dummy_dims=self.dummy_dims, params=self.model_params, device=self.device, is_parallel=True, init=self.init_model)
+        print(f"Best val acc: {(100*best_acc):>0.2f}%, Best val f1: {(100*best_f1):>0.2f}%, Epoch: {best_epoch}")
 
         loss, accuracy, f1 = test_loop(test_dataloader, self.model, loss_fn, split="test", device=self.device)
         df_test = pd.DataFrame({"accuracy":[accuracy], "f1":[f1]})
