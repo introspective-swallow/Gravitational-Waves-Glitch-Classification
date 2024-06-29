@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from ml.model.init_weights import init_weights
-from ml.model.blocks import conv_blocks
+from ml.model.blocks import vgg_blocks
 
 class MultiViewsAttention(nn.Module):
     def __init__(self, latent_vectors=128, hidden_units=64, dropout=0.25, arch=((5,128))):
@@ -26,11 +26,12 @@ class MultiViewsAttention(nn.Module):
         return self.attention(multi)
     
     def head(self, arch=((5,128))):
-        conv_blks =conv_blocks(arch)
+        blocks =vgg_blocks(arch)
         
         return nn.Sequential(
-                *conv_blks,
+                *blocks,
                 nn.Flatten(),
+                nn.Dropout(self.dropout),
                 nn.LazyLinear(self.latent_vectors),
                 nn.ReLU(),
     )
