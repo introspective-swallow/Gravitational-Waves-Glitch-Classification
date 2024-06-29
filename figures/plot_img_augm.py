@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-
+from ml.data.preprocess_GS import process_image_augment_train, process_image_augment_test
+from ml.utils.utils import seed_everything
 
 DATA = Path("./data/gravity_spy")
 DATASET_PATH = DATA / "trainingsetv1d0.h5"
@@ -20,11 +21,8 @@ dataset = pd.read_csv(METADATA_PATH)
 class_counts = [sum(dataset["label"]==glitch) for glitch in names_classes]
 
 classes = ["Blip", "Chirp", "Koi_Fish", "Helix", "Low_Frequency_Burst", "Scattered_Light"]
-gls = []
-gl_im = []
-for cl in classes:
-    gls.append(dataset[dataset["label"]==cl].iloc[0])
 
+test_img_row = dataset[dataset["label"]==classes[0]].iloc[0]
 
 
 with h5py.File(DATASET_PATH, 'r') as file:
@@ -32,18 +30,26 @@ with h5py.File(DATASET_PATH, 'r') as file:
      
     # Getting the data
     data = list(file[a_group_key])
-    for gl in gls:
-        test = file[gl["label"]][gl["sample_type"]]
-        gl_im.append(np.array(test[gl["gravityspy_id"]]["1.0.png"][:]))
+    test = file[test_img_row["label"]][test_img_row["sample_type"]]
+    test_img = np.array(test[test_img_row["gravityspy_id"]]["1.0.png"][:])
 
-fig, axs = plt.subplots(3,2, figsize=(14*0.8,17*0.8))
-print(gl_im[0].shape)
-axss = axs.flatten()
-for i, gl in enumerate(gl_im):
-    axss[i].imshow(gl.squeeze())
-    axss[i].set_title(gls[i]["label"].replace("_"," "), fontsize=20)
-    axss[i].set_xticks([])
-    axss[i].set_yticks([])
+seed_everything(42)
+test_img_augm1 = process_image_augment_train(test_img)
+test_img_augm2 = process_image_augment_test(test_img)
+test_img_augm3 = process_image_augment_train(test_img)
+
+fig, axs = plt.subplots(2, 2, figsize=(14*0.8,17*0.8))
+
+axs_flat = axs.flatten()
+
+axs_flat[0].imshow(test_img.squeeze())
+axs_flat[0].set_xticks([])
+axs_flat[0].set_yticks([])
+
+for i, img in enumerate([test_img_augm1, test_img_augm2, test_img_augm3]):
+    axs_flat[i+1].imshow(img.squeeze())
+    axs_flat[i+1].set_xticks([])
+    axs_flat[i+1].set_yticks([])
 
 plt.tight_layout()
 plt.show()

@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 from tqdm import tqdm
 
-DATA = Path("../data/gravity_spy")
+DATA = Path("./data/gravity_spy")
 DATASET_PATH = DATA / "trainingsetv1d0.h5"
 METADATA_PATH = DATA / "trainingset_v1d0_metadata.csv"
 
@@ -19,21 +19,13 @@ with h5py.File(DATASET_PATH, 'r') as f:
 dataset = pd.read_csv(METADATA_PATH)
 class_counts = [sum(dataset["label"]==glitch) for glitch in names_classes]
 
-datas05 = {"train":[],
+data = {"train":[],
            "validation":[],
            "test":[]}
-
-datas10 = []
-datas20 = {"train":[],
-           "validation":[],
-           "test":[]}
-datas40 = []
 
 labels = {"train":[],
           "validation":[],
           "test":[]}
-
-data = datas20
 
 with h5py.File(DATASET_PATH, 'r') as f:
     for i in tqdm(range(len(dataset))):
