@@ -3,11 +3,7 @@ import numpy as np
 from torchvision import transforms
 from PIL import Image
   
-def normalize_percentile(im):
-    # Normalize pixel values between 5-95th percentiles
-    idx = torch.where((torch.quantile(im,0.05) < im) * (torch.quantile(im,0.95) > im))
-    im[idx] = im[idx] / torch.median(im[idx])
-    return im
+
 
 
 def process_image(im):
@@ -23,20 +19,20 @@ def process_image_np(im):
 
 
 # Define the image transformation to resize the image to 224x224
-def process_image_augment_train(image):
+def process_image_augment_train(image, size=(140, 170)):
     image = torch.tensor(image)
     custom_transform = transforms.Compose([
         transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.RandomRotation(5),
-        transforms.RandomResizedCrop((128, 128), scale=(0.7, 1.0),antialias=True),
+        transforms.RandomResizedCrop(size, scale=(0.7, 1.0),antialias=True),
         transforms.Normalize(mean=[0.5] ,std=[0.5])
     ])
     return custom_transform(image)
 
-def process_image_augment_test(image):
+def process_image_augment_test(image, size=(140, 170)):
     image = torch.tensor(image)
     custom_transform = transforms.Compose([
-        transforms.Resize((128,128),antialias=True),
+        transforms.Resize(size,antialias=True),
         transforms.Normalize(mean=[0.5] ,std=[0.5])
     ])
     return custom_transform(image)

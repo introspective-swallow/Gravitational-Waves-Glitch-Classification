@@ -6,7 +6,6 @@ from torch.utils.data import Dataset
 import os
 from tqdm import tqdm
 
-# ------------ Gravity Spy datasets
 def get_metadata(data_file_path, meta_file_path):
     with h5py.File(data_file_path, 'r') as f:
         names_classes = list(f.keys())
@@ -20,8 +19,8 @@ def get_metadata(data_file_path, meta_file_path):
     return {"names_classes": names_classes, "num_classes": num_classes, "splits": splits, "resolutions": resolutions, "dataset": dataset, "class_counts": class_counts}
 
 # Define dataset class for the waveforms
-class WaveFormDataset(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, res, transform=None, device="cpu"):
+class WaveFormDatasetPost(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, res, transform=None, device="cpu", save_to_ram=False):
         self.split = split
         self.transform = transform
         self.labels = []
@@ -66,13 +65,14 @@ class WaveFormDataset(Dataset):
         return image, label
 
     
-class WaveFormDatasetFast(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, res=0.5, transform=None, device="cpu"):
+class WaveFormDataset(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, res=0.5, transform=None, device="cpu", save_to_ram=True):
         self.split = split
         self.transform = transform
         self.labels = []
         self.images = []
-        
+        self.save_to_ram = save_to_ram
+
         metadata = get_metadata(data_file_path, meta_file_path)
         complete_dataset = metadata["dataset"]
         classes = metadata["names_classes"]
@@ -97,21 +97,24 @@ class WaveFormDatasetFast(Dataset):
                     image = self.transform(np.array(f[label][split][id][resolutions[3]]))
                 self.images.append(image)
                 self.labels.append(classes.index(label))
-
-        self.labels = torch.tensor(self.labels).to(device)
-        self.images = torch.stack(self.images).to(device)
+        if save_to_ram:
+            self.labels = torch.tensor(self.labels).to(device)
+            self.images = torch.stack(self.images).to(device)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        image = self.images[idx]
+        if self.save_to_ram:
+            image = self.images[idx,:,:,:]
+        else:
+            image = self.images[idx]
         label = self.labels[idx]
 
         return image, label
 
-class WaveFormDatasetParallel(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu"):
+class WaveFormDatasetParallelPost(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu", save_to_ram=False):
         self.split = split
         self.transform = transform
         self.labels = []
@@ -151,12 +154,14 @@ class WaveFormDatasetParallel(Dataset):
         
         return image, label
 
-class WaveFormDatasetParallelPreprocess(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu"):
+class WaveFormDatasetParallel(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu", save_to_ram=True):
         self.split = split
         self.transform = transform
         self.labels = []
         self.images = []
+        self.save_to_ram = save_to_ram
+        self.device = device
         
         metadata = get_metadata(data_file_path, meta_file_path)
         complete_dataset = metadata["dataset"]
@@ -178,20 +183,25 @@ class WaveFormDatasetParallelPreprocess(Dataset):
                 image_multi = torch.cat((image05, image10, image20, image40), axis=0)
                 self.images.append(image_multi)
                 self.labels.append(classes.index(label))
-        self.labels = torch.tensor(self.labels).to(device)
-        self.images = torch.stack(self.images).to(device)
+
+        if self.save_to_ram:
+            self.labels = torch.tensor(self.labels).to(device)
+            self.images = torch.stack(self.images).to(device)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        image = self.images[idx,:,:,:]
+        if self.save_to_ram:
+            image = self.images[idx,:,:,:]
+        else:
+            image = self.images[idx]
+        
         label = self.labels[idx]
+        return image, label
 
-        return image, label   
-
-class WaveFormDatasetMerged(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu"):
+class WaveFormDatasetMergedPost(Dataset):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu", save_to_ram=False):
         self.split = split
         self.transform = transform
         self.labels = []
@@ -235,12 +245,12 @@ class WaveFormDatasetMerged(Dataset):
 
  
 class WaveFormDatasetMerged(Dataset):
-    def __init__(self, data_file_path, meta_file_path, split, transform=None, preprocess=True, device="cpu"):
+    def __init__(self, data_file_path, meta_file_path, split, transform=None, device="cpu", save_to_ram=True):
         self.split = split
         self.transform = transform
-        self.preprocess = preprocess
         self.labels = []
         self.images = []
+        self.save_to_ram = save_to_ram
 
         metadata = get_metadata(data_file_path, meta_file_path)
         complete_dataset = metadata["dataset"]
@@ -265,7 +275,7 @@ class WaveFormDatasetMerged(Dataset):
 
                 self.images.append(image_multi)
                 self.labels.append(classes.index(label))
-        if self.preprocess:
+        if self.save_to_ram:
             self.labels = torch.tensor(self.labels).to(device)
             self.images = torch.stack(self.images).to(device)
 
@@ -273,12 +283,10 @@ class WaveFormDatasetMerged(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        if self.preprocess:
+        if self.save_to_ram:
             image = self.images[idx,:,:,:]
         else:
             image = self.images[idx]
-            if self.transform:
-                image = self.transform(image)
         
         label = self.labels[idx]
         return image, label
