@@ -12,7 +12,6 @@ MANIFEST
 
 # jupyter notebook
 figures/*.ipynb
-/**/*.ipynb
 /**/*.ipynb_checkpoints
 
 # Byte-compiled / optimized / DLL files

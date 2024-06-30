@@ -10,7 +10,13 @@ dependencies = [
     "pandas",
     "h5py",
     "matplotlib",
-    "torch",
-    "scikit-learn",
+    "torch == 2.2.0",
+    "torchvision == 0.17.0",
+    "scikit-learn == 1.5.0",
     "tqdm"
+]
+
+[project.optional-dependencies]
+GW = [
+    "gwpy == 3.0.8"
 ]
