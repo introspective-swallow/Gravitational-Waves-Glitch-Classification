@@ -4,17 +4,16 @@ import torch
 import re
 from pathlib import Path
 
-ROOT = Path("/home/gui/OneDrive/Mathematics/TFG/Models/v0")
-DATA_PATH1 = Path("/home/gui/OneDrive/Mathematics/TFG/Models/v0/multi-attention/")
-DATA_PATH2 = Path("/home/gui/OneDrive/Mathematics/TFG/Models/v0/resX")
-DATA_PATH3 = Path("/home/gui/OneDrive/Mathematics/TFG/Models/v0/transfer_learning")
+ROOT = Path("/home/gui/OneDrive/Mathematics/TFG/Models/GS/v0")
+PATHS = [ROOT / name for name in ["multi-attention", "resX", "transfer_learning", "resXz", "resnet"]]
+
 
 
 logs = []
 dir_list = []
 
 # Get all the directories in all data path
-for DATA_PATH in [DATA_PATH1, DATA_PATH2, DATA_PATH3]:
+for DATA_PATH in PATHS:
     dir_list = os.listdir(DATA_PATH)
 
     for dir in dir_list:
@@ -35,6 +34,7 @@ for DATA_PATH in [DATA_PATH1, DATA_PATH2, DATA_PATH3]:
                 params = pd.read_csv(DATA_PATH / dir / subdir / "params.csv")
             except:
                 print(f"No info on parameters of model in {DATA_PATH / dir / subdir}")
+                params = pd.DataFrame({"num_classes": [22]})
             # if there is no img_augmentation column, add it and set it to False
             if "img_augmentation" not in params.columns:
                 params["img_augmentation"] = "consultar"

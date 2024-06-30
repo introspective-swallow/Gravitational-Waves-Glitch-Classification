@@ -38,7 +38,7 @@ test_img_augm1 = process_image_augment_train(test_img)
 test_img_augm2 = process_image_augment_test(test_img)
 test_img_augm3 = process_image_augment_train(test_img)
 
-fig, axs = plt.subplots(2, 2, figsize=(14*0.8,17*0.8))
+fig, axs = plt.subplots(2, 2)
 
 axs_flat = axs.flatten()
 
@@ -51,5 +51,7 @@ for i, img in enumerate([test_img_augm1, test_img_augm2, test_img_augm3]):
     axs_flat[i+1].set_xticks([])
     axs_flat[i+1].set_yticks([])
 
-plt.tight_layout()
+#plt.tight_layout()
+#plt.savefig("/home/gui/OneDrive/Mathematics/TFG/Latex/Figs/" + "img_augm.png", transparent=True, bbox_inches='tight')
+
 plt.show()

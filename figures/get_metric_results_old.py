@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 import re
 
-DATA_PATH = "/home/gui/OneDrive/Mathematics/TFG/Models/v0/kaggle/results/"
+DATA_PATH = "/home/gui/OneDrive/Mathematics/TFG/Models/GS/"
 
 logs = []
 
@@ -32,4 +32,4 @@ logs["loss_type"] = logs["model_name"].apply(lambda x: "baseline" if "lossbaseli
 logs["input_data"] = logs["model_name"].apply(lambda x: "merged" if "merged" in x else f"{re.search(r'res\d+', x).group(0)}")
 
 logs = logs.sort_values("f1", ascending=False)
-logs.to_csv(DATA_PATH + "all_logs.csv")
+logs.to_csv(DATA_PATH + "all_logs_res.csv")
