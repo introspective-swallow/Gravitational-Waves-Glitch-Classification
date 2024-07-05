@@ -341,7 +341,7 @@ class WaveFormDatasetMerged3Channel(Dataset):
         label = self.labels[idx]
         return image, label
 
-class WaveFormDatasetMerged3ChannelPostprocess(Dataset):
+class WaveFormDatasetMerged3ChannelPost(Dataset):
     def __init__(self, data_file_path, meta_file_path, split, transform=None, save_to_ram=True, device="cpu"):
         self.split = split
         self.transform = transform
@@ -366,26 +366,19 @@ class WaveFormDatasetMerged3ChannelPostprocess(Dataset):
                 image10 = np.array(f[label][split][id][resolutions[1]])
                 image20 = np.array(f[label][split][id][resolutions[2]])
                 image40 = np.array(f[label][split][id][resolutions[3]])
-                image_multi1 = torch.cat((image05, image10), axis=1)
-                image_multi2 = torch.cat((image20, image40), axis=1)
-                image_multi = torch.cat((image_multi1, image_multi2), axis=2)
-
-                # Repeat the first channel to have 3 channels
-                image_multi = torch.cat((image_multi, image_multi, image_multi), axis=0)
-                image_multi = self.transform(image_multi)
+                image_multi1 = np.concatenate((image05, image10), axis=1)
+                image_multi2 = np.concatenate((image20, image40), axis=1)
+                image_multi = np.concatenate((image_multi1, image_multi2), axis=2)
 
                 self.images.append(image_multi)
                 self.labels.append(classes.index(label))
-        if self.save_to_ram:
-            self.labels = torch.tensor(self.labels).to(device)
-            self.images = torch.stack(self.images).to(device)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        if self.save_to_ram:
-            image = self.images[idx,:,:,:]
+        if self.transform:
+            image = self.transform(self.images[idx])
         else:
             image = self.images[idx]
         
