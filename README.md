@@ -32,11 +32,14 @@ Best models over simulated glitches:
 | RF     | 99.44%    | -                           |
 
 
-Training over simulated glitches dataset:
+CNN-fusió intermitja
+CNN-fusió inicial
+CNN-atenció
+CNN-atenció VGG
+Precisió
+F1 -score
 
-<img src="figures/ex-sint-glitch-train.png" alt="drawing" width="400"/>
-
-Best models over Gravity Spy dataset
+Best of each model over Gravity Spy dataset:
 
 | Resolution | Accuracy | F1-score |
 |-----------|-----------|----------|
@@ -44,8 +47,11 @@ Best models over Gravity Spy dataset
 | 1s        | 95.9%     | 92.9%    |
 | 2s        | 96.2%     | 90.0%    |
 | 4s        | 94.4%     | 91.2%    |
-
-
-Training over Gravity Spy dataset:
-
-<img src="figures/ex-GS-glitch-train.png" alt="drawing" width="400"/>
+| CNN middle fusion | 97,44 % | 96,52 % |
+| CNN initial fusion | 97,59 % | 96,37 % |
+| CNN attention | 95,37 % | 91,02 % |
+| CNN attention VGG | 96,97 % | 95,33 % |
+| ResNet18  | 98,06% | 97,59 % |
+| ResNet18 pretrained | 98.06% | 97.68% |
+| ResNet50 pretrained | 97.70% | 96.01% |
+| vit_b_16 |97.31% | 95.8%|
