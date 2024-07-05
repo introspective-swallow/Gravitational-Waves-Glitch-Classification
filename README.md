@@ -32,13 +32,6 @@ Best models over simulated glitches:
 | RF     | 99.44%    | -                           |
 
 
-CNN-fusió intermitja
-CNN-fusió inicial
-CNN-atenció
-CNN-atenció VGG
-Precisió
-F1 -score
-
 Best of each model over Gravity Spy dataset:
 
 | Resolution | Accuracy | F1-score |
