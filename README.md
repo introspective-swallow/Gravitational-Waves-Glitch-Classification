@@ -34,12 +34,13 @@ Best models over simulated glitches:
 
 Best of each model over Gravity Spy dataset:
 
-| Resolution | Accuracy | F1-score |
+| Model | Accuracy | F1-score |
 |-----------|-----------|----------|
-| 0.5s      | 94.7%     | 93.5%    |
-| 1s        | 95.9%     | 92.9%    |
-| 2s        | 96.2%     | 90.0%    |
-| 4s        | 94.4%     | 91.2%    |
+| 3xCNN 0.5s      | 94.7%     | 93.5%    |
+| 3xCNN 1s        | 95.9%     | 92.9%    |
+| 3xCNN 2s        | 96.2%     | 90.0%    |
+| 3xCNN 4s        | 94.4%     | 91.2%    |
+| 3xCNN ensemble 0.5s + 1s + 2s |96,81 %|95,31 %|
 | CNN middle fusion | 97,44 % | 96,52 % |
 | CNN initial fusion | 97,59 % | 96,37 % |
 | CNN attention | 95,37 % | 91,02 % |
