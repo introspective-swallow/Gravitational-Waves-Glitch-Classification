@@ -10,6 +10,14 @@ def ResNet18(num_classes=22):
     model.init_weights = init_weights
     return model
 
+# Resnet18 pretrained 
+def ResNet18_3Channel(num_classes=22):
+    model = models.resnet18()
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+
+    init_weights(model.fc)
+    return model
+
 # Resnet18 pretrained adapted to 1 channel
 def ResNet18_pretrained(num_classes=22):
     model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
