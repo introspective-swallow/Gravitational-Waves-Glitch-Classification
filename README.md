@@ -5,6 +5,8 @@ Classification of glitches in Gravitational Waves data from:
 
 - [Machine learning for Gravity Spy: Glitch classification and dataset](https://doi.org/10.5281/zenodo.1476156). Bahaadini, Sara1; Noroozi, Vahid; Rohani, Neda1; Coughlin, Scott; Zevin, Michael; Smith, Joshua; Kalogera, Vicky; Aggelos, Katsaggelos (October 31, 2018)
 
+The final degree thesis associated with this repository is included [here](https://github.com/introspective-swallow/Gravitational-Waves-Glitch-Classification/blob/main/TFG.pdf). It is only written in catalan, but might be translated in the future.
+
 ## Set up
 Install dependencies
 ```
